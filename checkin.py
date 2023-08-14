@@ -95,8 +95,8 @@ def checkin(cookie):
         msg = checkin_res.json()['message']
         remain = state_res.json()['data']['leftDays'].split('.')[0]
         mail = state_res.json()['data']['email']
-    except (ValueError, KeyError) as e:
-        msg = f"解析登录结果失败：{type(e)}({e})\n{checkin_res.text}"
+    except (ValueError, KeyError):
+        msg = f"解析登录结果失败：\n{checkin_res.text}"
         print(msg)
         return msg, None, None
 
