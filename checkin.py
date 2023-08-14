@@ -9,12 +9,12 @@ new Env('GLaDOS签到');
 Update: 2023/7/27
 """
 
-
 import requests
 import json
 import os
 import sys
 import time
+
 
 # 获取GlaDOS账号Cookie
 def get_cookies():
@@ -55,30 +55,30 @@ def load_send():
 
 # GlaDOS签到
 def checkin(cookie):
-    checkin_url= "https://glados.rocks/api/user/checkin"
-    state_url= "https://glados.rocks/api/user/status"
+    checkin_url = "https://glados.rocks/api/user/checkin"
+    state_url = "https://glados.rocks/api/user/status"
     referer = 'https://glados.rocks/console/checkin'
     origin = "https://glados.rocks"
     useragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36"
-    payload={
+    payload = {
         'token': 'glados.one'
     }
     try:
-        checkin = requests.post(checkin_url,headers={
-            'cookie': cookie ,
+        checkin = requests.post(checkin_url, headers={
+            'cookie': cookie,
             'referer': referer,
-            'origin':origin,
-            'user-agent':useragent,
-            'content-type':'application/json;charset=UTF-8'},data=json.dumps(payload))
-        state =  requests.get(state_url,headers={
-            'cookie': cookie ,
+            'origin': origin,
+            'user-agent': useragent,
+            'content-type': 'application/json;charset=UTF-8'}, data=json.dumps(payload))
+        state = requests.get(state_url, headers={
+            'cookie': cookie,
             'referer': referer,
-            'origin':origin,
-            'user-agent':useragent})
+            'origin': origin,
+            'user-agent': useragent})
     except Exception as e:
         print(f"签到失败，请检查网络：{e}")
         return None, None, None
-    
+
     try:
         mess = checkin.json()['message']
         mail = state.json()['data']['email']
@@ -86,7 +86,7 @@ def checkin(cookie):
     except Exception as e:
         print(f"解析登录结果失败：{e}")
         return None, None, None
-    
+
     return mess, time, mail
 
 
@@ -101,7 +101,7 @@ def run_checkin():
         ret, remain, email = checkin(cookie)
         if not ret:
             continue
-            
+
         content = f"账号：{email}\n签到结果：{ret}\n剩余天数：{remain}\n"
         print(content)
         contents.append(content)
@@ -115,7 +115,7 @@ if __name__ == '__main__':
     contents = run_checkin()
     send_notify = load_send()
     if send_notify:
-        if contents =='':
-            contents=f'签到失败，请检查账户信息以及网络环境'
+        if contents == '':
+            contents = f'签到失败，请检查账户信息以及网络环境'
             print(contents)
         send_notify(title, contents)
