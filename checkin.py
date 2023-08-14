@@ -10,10 +10,19 @@ Update: 2023/7/27
 """
 
 import requests
+import requests.exceptions
 import json
 import os
 import sys
 import time
+
+
+class NetworkException(Exception):
+    pass
+
+
+class CheckInException(Exception):
+    pass
 
 
 # 获取GlaDOS账号Cookie
@@ -59,63 +68,75 @@ def checkin(cookie):
     state_url = "https://glados.rocks/api/user/status"
     referer = 'https://glados.rocks/console/checkin'
     origin = "https://glados.rocks"
-    useragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36"
+    useragent = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                 "Chrome/86.0.4240.75 Safari/537.36")
     payload = {
         'token': 'glados.one'
     }
+
     try:
-        checkin = requests.post(checkin_url, headers={
+        checkin_res = requests.post(checkin_url, headers={
             'cookie': cookie,
             'referer': referer,
             'origin': origin,
             'user-agent': useragent,
             'content-type': 'application/json;charset=UTF-8'}, data=json.dumps(payload))
-        state = requests.get(state_url, headers={
+        state_res = requests.get(state_url, headers={
             'cookie': cookie,
             'referer': referer,
             'origin': origin,
             'user-agent': useragent})
-    except Exception as e:
-        print(f"签到失败，请检查网络：{e}")
-        return None, None, None
+    except requests.exceptions.RequestException as e:
+        msg = f"签到失败，请检查网络：{e}"
+        print(msg)
+        return msg, None, None
 
     try:
-        mess = checkin.json()['message']
-        mail = state.json()['data']['email']
-        time = state.json()['data']['leftDays'].split('.')[0]
-    except Exception as e:
-        print(f"解析登录结果失败：{e}")
-        return None, None, None
+        msg = checkin_res.json()['message']
+        remain = state_res.json()['data']['leftDays'].split('.')[0]
+        mail = state_res.json()['data']['email']
+    except (ValueError, KeyError) as e:
+        msg = f"解析登录结果失败：{e}"
+        print(msg)
+        return msg, None, None
 
-    return mess, time, mail
+    return msg, remain, mail
 
 
 # 执行签到任务
 def run_checkin():
-    contents = []
+    contents_list = []
     cookies = get_cookies()
     if not cookies:
         return ""
 
+    all_good = True
     for cookie in cookies:
         ret, remain, email = checkin(cookie)
-        if not ret:
-            continue
 
-        content = f"账号：{email}\n签到结果：{ret}\n剩余天数：{remain}\n"
+        if (remain is None) and (email is None):
+            content = f"Cookie: {cookie}\n{ret}\n"
+            all_good = False
+        else:
+            content = f"账号：{email}\n签到结果：{ret}\n剩余天数：{remain}\n"
+
         print(content)
-        contents.append(content)
+        contents_list.append(content)
 
-    contents_str = "".join(contents)
-    return contents_str
+    contents_str = "".join(contents_list)
+
+    return contents_str, all_good
+
+
+def main():
+    title = "GlaDOS签到通知"
+
+    contents, all_good = run_checkin()
+    send_notify = load_send()
+
+    if send_notify and not all_good:
+        send_notify(title, contents)
 
 
 if __name__ == '__main__':
-    title = "GlaDOS签到通知"
-    contents = run_checkin()
-    send_notify = load_send()
-    if send_notify:
-        if contents == '':
-            contents = f'签到失败，请检查账户信息以及网络环境'
-            print(contents)
-        send_notify(title, contents)
+    main()
