@@ -17,14 +17,6 @@ import sys
 import time
 
 
-class NetworkException(Exception):
-    pass
-
-
-class CheckInException(Exception):
-    pass
-
-
 # 获取GlaDOS账号Cookie
 def get_cookies():
     if os.environ.get("GR_COOKIE"):
