@@ -56,10 +56,10 @@ def load_send():
 
 # GlaDOS签到
 def checkin(cookie):
-    checkin_url = "https://glados.rocks/api/user/checkin"
-    state_url = "https://glados.rocks/api/user/status"
-    referer = 'https://glados.rocks/console/checkin'
-    origin = "https://glados.rocks"
+    checkin_url = "https://glados.network/api/user/checkin"
+    state_url = "https://glados.network/api/user/status"
+    referer = 'https://glados.network/console/checkin'
+    origin = "https://glados.network"
     useragent = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
                  "Chrome/86.0.4240.75 Safari/537.36")
     payload = {
